@@ -32,7 +32,7 @@ public class RayTraceReflections extends Frame {
 	public static final nTuple lightBasis2 = new nTuple(5.0f, -3.0f, -2.0f).normalize();
 	public static final nTuple lightBasis3 = new nTuple(1.0f, 7.0f, -8.0f).normalize();
 	public static final float s = 10.0f;		// img plane size
-	public static final float camZ = 20.0f;	// camera position 
+	public static final float camZ = 20.0f;		// camera position 
 	public static final int MAX_REFLECTION_DEPTH = 5;
 	public static ArrayList<Sphere> spheres = new ArrayList<Sphere>();
 	public static Quadtree tree;
@@ -53,6 +53,9 @@ public class RayTraceReflections extends Frame {
 			shadowTree.addShadowSphere(s);
 			spheres.add(s);
 		}
+
+		Statistics stats = new Statistics(spheres);
+		stats.generateUsefulInfo();
 		new RayTraceReflections();
 	}
 
