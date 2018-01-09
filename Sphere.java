@@ -22,12 +22,6 @@ public class Sphere {
 
 	public nTuple getColor() { return this.color; }
 
-	public void print() {
-		System.out.println("Center: (" + this.center.getX() + ", " + this.center.getY() + ", " + this.center.getZ() + ")");
-		System.out.println("Radius: " + this.radius); 
-		System.out.println("Color: (" + this.color.getX() + ", " + this.color.getY() + ", " + this.color.getZ() + ")");
-	}
-
 	public Sphere(float x, float y, float z, float radius, float r,
 				float g, float b, nTuple lightBasis1, nTuple lightBasis2, nTuple lightBasis3) {
 		this.center = new nTuple(x, y, z);
@@ -110,11 +104,9 @@ public class Sphere {
 	}
 
 	public Color shadeSphere(nTuple point, nTuple light, boolean inShadow) {
-		//return new Color(this.color.getX(), this.color.getY(), this.color.getZ());
 		return lambertian(point, light, inShadow);
 	}
 
-	// Lambertian shading
 	public Color lambertian(nTuple point, nTuple light, boolean inShadow) {
 		float cosVectors = ambFactor;
 		if (!inShadow) {

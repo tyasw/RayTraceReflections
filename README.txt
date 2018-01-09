@@ -15,7 +15,4 @@ To run Ray Trace Reflections, run the following command:
 	java RayTraceReflections
 
 The program will then prompt the user for the number of spheres they want
-drawn, and whether they want shadows or not. 
-
-CURRENTLY, SHADOWS ARE NEVER
-DRAWN, SO ANSWERING YES TO THE SECOND PROMPT HAS NO EFFECT.
+drawn, and other various questions.

@@ -25,27 +25,29 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class RayTraceReflections extends Frame {
-    public static final int WIDTH = 1024;
-	public static final int MAX_REFLECTION_DEPTH = 5;
-    public static final int HEIGHT = 1024;
+	public static int WIDTH = 512;
+	public static int HEIGHT = 512;
 	public static nTuple background = new nTuple(0.4f, 0.6f, 0.8f);
+	public static ArrayList<Sphere> spheres = new ArrayList<Sphere>();
 	public static Quadtree tree;
 	public static Quadtree shadowTree;
-	public static ArrayList<Sphere> spheres = new ArrayList<Sphere>();
 	public static nTuple light;
 	public static nTuple lightBasis2;
 	public static nTuple lightBasis3;
-	public static int numSpheres;
-	public static int treeDepth = 8;	
 	public static float s = 10.0f;		// img plane size
 	public static float camZ = 20.0f;	// camera position 
-	public static boolean wantReflect = true;
+	public static boolean REFLECT = true;
+	public static int MAX_REFLECTION_DEPTH = 5;
 
 	public static void main(String[] args) {
+		Scanner input = new Scanner(System.in);
+		int numSpheres = howManySpheres(input);
+		WIDTH = howWide(input);
+		HEIGHT = howHigh(input);
+		int treeDepth = howDeep(input);
+		REFLECT = wantReflections(input);
 		tree = new Quadtree(-s, -s, s, s, treeDepth, camZ);
 		shadowTree = new Quadtree(-s*5, -s*5, s*5, s*5, treeDepth, camZ);
-		numSpheres = getUserParameters();
-		System.out.println("Drawing " + numSpheres + " spheres.");
 		light = new nTuple(1.0f, 1.0f, 1.0f).normalize();
 		lightBasis2 = new nTuple(5.0f, -3.0f, -2.0f).normalize();
 		lightBasis3 = new nTuple(1.0f, 7.0f, -8.0f).normalize();
@@ -59,33 +61,54 @@ public class RayTraceReflections extends Frame {
 		new RayTraceReflections();
 	}
 
-	/* Let user decide how many spheres to draw, and if relections 
-	 * should be drawn
-	 */
-	public static int getUserParameters() {
-		Scanner input = new Scanner(System.in);
+	public static int howManySpheres(Scanner input) {
 		System.out.print("How many spheres do you want drawn? ");
-		int numSpheres = input.nextInt();
-		System.out.print("Do you want reflections drawn (yes/no)? ");
-		if (input.next().equals("no")) {
-			wantReflect = false;
+		return input.nextInt();
+	}
+
+	public static int howWide(Scanner input) {
+		System.out.print("How wide do you want the window to be (default is 512)? ");
+		return input.nextInt();
+	}
+
+	public static int howHigh(Scanner input) {
+		System.out.print("How tall do you want the window to be (default is 512)? ");
+		return input.nextInt();
+	}
+
+	public static int howDeep(Scanner input) {
+		System.out.print("How deep do you want the quadtree to be? (Less than 10 recommended)? ");
+		return input.nextInt();
+	}
+
+	public static boolean wantReflections(Scanner input) {
+		System.out.print("Do you want reflections drawn (y/n)? ");
+		String response = input.next();
+		boolean answer = false;
+		if (response.equals("y") || response.equals("yes")) {
+			answer = true;	
+		} else if (!response.equals("n") && !response.equals("no")){
+			// ERROR
 		}
-		return numSpheres;
+		return answer;
 	}
 
 	public static Sphere randSphere(nTuple u1, nTuple u2, nTuple u3) {
 		float x = (float) Math.random() * 16.0f - 8.0f;
 		float y = (float) Math.random() * 16.0f - 8.0f;
 		float z = (float) Math.random() * 16.0f - 8.0f;
-		float radius = 1.0f;
-		//float radius = (float) Math.random() * 0.1f + 0.05f;
+		float radius = 0.0f;
+		if (REFLECT) {
+			radius = (float) Math.random() * 0.4f + 0.2f;
+		} else {
+			radius = (float) Math.random() * 0.1f + 0.05f;
+		}
 		float r = (float) Math.random();
 		float g = (float) Math.random();
 		float b = (float) Math.random();
 		return new Sphere(x, y, z, radius, r, g, b, u1, u2, u3);
 	}
 
-	// Find pixel color
 	public Color getColor(int x, int y) {
 		nTuple p = new nTuple(0.0f, 0.0f, camZ);	// camera point
 		nTuple q = imagePlaneCoord(x, y);			// point on image plane
@@ -93,24 +116,27 @@ public class RayTraceReflections extends Frame {
 		double closestHit = Double.POSITIVE_INFINITY;
 		float intersection = 0.0f;	// t-value for ray to intersect sphere
 		Sphere closestSphere = null;
-		SphereList isectSpheres = tree.getSpheres(q.getX(), q.getY());
+		SphereList intersectSpheres = tree.getSpheres(q.getX(), q.getY());
 
-		while (isectSpheres != null) { // Find closest sphere
-			Sphere next = isectSpheres.getSphere();
+		while (intersectSpheres != null) { // Find closest sphere
+			Sphere next = intersectSpheres.getSphere();
 			intersection = ray.intersectSphere(next);
 			if (intersection > 0.01f && intersection < closestHit) {
 				closestHit = intersection;
 				closestSphere = next;
 			}
-			isectSpheres = isectSpheres.getNext();
+			intersectSpheres = intersectSpheres.getNext();
 		}
 
 		if (closestSphere != null) {
 			nTuple IntPt = ray.pointAlongRay((float) closestHit);
 			boolean inShadow = false;
-			return reflect(closestSphere, ray, IntPt);
-			//boolean inShadow = inShadow(IntPt);
-			//return closestSphere.shadeSphere(IntPt, light, inShadow);
+			if (REFLECT) {
+				return reflect(closestSphere, ray, IntPt);
+			} else {
+				inShadow = inShadow(IntPt);
+				return closestSphere.shadeSphere(IntPt, light, inShadow);
+			}
 		} else {
 			return new Color(background.getX(), background.getY(), background.getZ());
 		}
@@ -121,7 +147,7 @@ public class RayTraceReflections extends Frame {
 	 * accordingly.
 	 */
 	public Color reflect(Sphere s, ray incident, nTuple point) {
-		if (wantReflect && incident.getDepth() < MAX_REFLECTION_DEPTH) {
+		if (REFLECT && incident.getDepth() < MAX_REFLECTION_DEPTH) {
 			nTuple n = point.subtract(s.getCenter()).normalize();
 			nTuple incDir = incident.getVector();
 			nTuple reflectDir = new nTuple(incDir.subtract(n.scale(2*(n.dot(incDir)))));
@@ -183,19 +209,9 @@ public class RayTraceReflections extends Frame {
      * the frame.
      **/
     public RayTraceReflections() {
-        //Title our frame.
         super("RayTracer");
-
-        //Set the size for the frame.
         setSize(WIDTH, HEIGHT);
-
-        //We need to turn on the visibility of our frame
-        //by setting the Visible parameter to true.
         setVisible(true);
-
-        //Now, we want to be sure we properly dispose of resources
-        //this frame is using when the window is closed.  We use
-        //an anonymous inner class adapter for this.
         addWindowListener(new WindowAdapter()
                           {public void windowClosing(WindowEvent e)
                           {dispose(); System.exit(0);}

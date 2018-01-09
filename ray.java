@@ -25,7 +25,6 @@ public class ray {
 		this.reflectDepth = newDepth;
 	}
 
-	// intersect a sphere with this ray
 	public float intersectSphere(Sphere s) {
 		// Move sphere and ray by same amount to simplify math
 		nTuple q = this.camera.subtract(s.getCenter());
@@ -82,7 +81,6 @@ public class ray {
 		}
 	}
 
-	// Finds any point along a ray 
 	public nTuple pointAlongRay(float t) {
 		return this.camera.add(this.vector.scale(t));
 	}

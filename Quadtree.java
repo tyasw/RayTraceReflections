@@ -186,5 +186,5 @@ public class Quadtree {
 		}
 	}
 
-	public float sqr(float x) { return x * x; }
+	private float sqr(float x) { return x * x; }
 }
