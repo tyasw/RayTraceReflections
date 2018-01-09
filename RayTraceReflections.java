@@ -25,32 +25,27 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class RayTraceReflections extends Frame {
-	public static int WIDTH = 512;
-	public static int HEIGHT = 512;
-	public static nTuple background = new nTuple(0.4f, 0.6f, 0.8f);
+	public static final int WIDTH = 512;
+	public static final int HEIGHT = 512;
+	public static final nTuple background = new nTuple(0.4f, 0.6f, 0.8f);
+	public static final nTuple light = new nTuple(1.0f, 1.0f, 1.0f).normalize();
+	public static final nTuple lightBasis2 = new nTuple(5.0f, -3.0f, -2.0f).normalize();
+	public static final nTuple lightBasis3 = new nTuple(1.0f, 7.0f, -8.0f).normalize();
+	public static final float s = 10.0f;		// img plane size
+	public static final float camZ = 20.0f;	// camera position 
+	public static final int MAX_REFLECTION_DEPTH = 5;
 	public static ArrayList<Sphere> spheres = new ArrayList<Sphere>();
 	public static Quadtree tree;
 	public static Quadtree shadowTree;
-	public static nTuple light;
-	public static nTuple lightBasis2;
-	public static nTuple lightBasis3;
-	public static float s = 10.0f;		// img plane size
-	public static float camZ = 20.0f;	// camera position 
 	public static boolean REFLECT = true;
-	public static int MAX_REFLECTION_DEPTH = 5;
 
 	public static void main(String[] args) {
 		Scanner input = new Scanner(System.in);
 		int numSpheres = howManySpheres(input);
-		WIDTH = howWide(input);
-		HEIGHT = howHigh(input);
 		int treeDepth = howDeep(input);
 		REFLECT = wantReflections(input);
 		tree = new Quadtree(-s, -s, s, s, treeDepth, camZ);
 		shadowTree = new Quadtree(-s*5, -s*5, s*5, s*5, treeDepth, camZ);
-		light = new nTuple(1.0f, 1.0f, 1.0f).normalize();
-		lightBasis2 = new nTuple(5.0f, -3.0f, -2.0f).normalize();
-		lightBasis3 = new nTuple(1.0f, 7.0f, -8.0f).normalize();
 
 		for (int i = 0; i < numSpheres; i++) {
 			Sphere s = randSphere(light, lightBasis2, lightBasis3);
@@ -63,16 +58,6 @@ public class RayTraceReflections extends Frame {
 
 	public static int howManySpheres(Scanner input) {
 		System.out.print("How many spheres do you want drawn? ");
-		return input.nextInt();
-	}
-
-	public static int howWide(Scanner input) {
-		System.out.print("How wide do you want the window to be (default is 512)? ");
-		return input.nextInt();
-	}
-
-	public static int howHigh(Scanner input) {
-		System.out.print("How tall do you want the window to be (default is 512)? ");
 		return input.nextInt();
 	}
 
@@ -218,10 +203,6 @@ public class RayTraceReflections extends Frame {
                           }
         );
     }
-
-    public int getWIDTH() { return this.WIDTH; }
-
-    public int getHEIGHT() { return this.HEIGHT; }
 
     /**
      * The paint method provides the real magic.  Here we
