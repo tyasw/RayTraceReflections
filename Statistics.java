@@ -22,17 +22,10 @@ public class Statistics {
 	public void generateUsefulInfo() {
 		try {
 			PrintStream output = new PrintStream(new File("stats.csv"));
-			output.println("x,y,z,r,g,b");
+			output.println("x,y,z");
 
 			for (int i = 0; i < spheres.size(); i++) {
-				Sphere next = spheres.get(i);
-				output.print(next.getCenter().getX() + ",");
-				output.print(next.getCenter().getY() + ",");
-				output.print(next.getCenter().getZ() + ",");
-				output.print(next.getColor().getX() + ",");
-				output.print(next.getColor().getY() + ",");
-				output.print(next.getColor().getZ());
-				output.println();
+				output.println(spheres.get(i));
 			}
 
 		} catch (FileNotFoundException f) {

@@ -27,28 +27,41 @@ import java.awt.event.*;
 public class RayTraceReflections extends Frame {
 	public static final int WIDTH = 512;
 	public static final int HEIGHT = 512;
-	public static final nTuple background = new nTuple(0.4f, 0.6f, 0.8f);
-	public static final nTuple light = new nTuple(1.0f, 1.0f, 1.0f).normalize();
-	public static final nTuple lightBasis2 = new nTuple(5.0f, -3.0f, -2.0f).normalize();
-	public static final nTuple lightBasis3 = new nTuple(1.0f, 7.0f, -8.0f).normalize();
-	public static final float s = 10.0f;		// img plane size
-	public static final float camZ = 20.0f;		// camera position 
+	public static final nTuple BACKGROUND = new nTuple(0.4f, 0.6f, 0.8f);
+	public static final nTuple LIGHT = new nTuple(1.0f, 1.0f, 1.0f).normalize();
+	public static final nTuple LIGHT_BASIS_2 = new nTuple(5.0f, -3.0f, -2.0f).normalize();
+	public static final nTuple LIGHT_BASIS_3 = new nTuple(1.0f, 7.0f, -8.0f).normalize();
+	public static final float IMG_PLANE_SZ = 10.0f;
+	public static final float CAM_Z = 20.0f;
 	public static final int MAX_REFLECTION_DEPTH = 5;
 	public static ArrayList<Sphere> spheres = new ArrayList<Sphere>();
 	public static Quadtree tree;
 	public static Quadtree shadowTree;
 	public static boolean REFLECT = true;
 
+	/*
+	 * Main entry point
+	 */
 	public static void main(String[] args) {
 		Scanner input = new Scanner(System.in);
 		int numSpheres = howManySpheres(input);
 		int treeDepth = howDeep(input);
 		REFLECT = wantReflections(input);
-		tree = new Quadtree(-s, -s, s, s, treeDepth, camZ);
-		shadowTree = new Quadtree(-s*5, -s*5, s*5, s*5, treeDepth, camZ);
+		tree = new Quadtree(-IMG_PLANE_SZ,
+							-IMG_PLANE_SZ,
+							IMG_PLANE_SZ,
+							IMG_PLANE_SZ,
+							treeDepth,
+							CAM_Z);
+		shadowTree = new Quadtree(-IMG_PLANE_SZ * 5, 
+									-IMG_PLANE_SZ * 5,
+									IMG_PLANE_SZ * 5,
+									IMG_PLANE_SZ * 5,
+									treeDepth,
+									CAM_Z);
 
 		for (int i = 0; i < numSpheres; i++) {
-			Sphere s = randSphere(light, lightBasis2, lightBasis3);
+			Sphere s = randSphere(LIGHT, LIGHT_BASIS_2, LIGHT_BASIS_3);
 			tree.addSphere(s);
 			shadowTree.addShadowSphere(s);
 			spheres.add(s);
@@ -73,11 +86,16 @@ public class RayTraceReflections extends Frame {
 		System.out.print("Do you want reflections drawn (y/n)? ");
 		String response = input.next();
 		boolean answer = false;
+
+		while (!response.equals("y") && !response.equals("yes") && !response.equals("n") && !response.equals("no")) {
+			System.out.print("Please respond with one of the following: y, n, yes, or no:");
+			response = input.next();
+		}
+
 		if (response.equals("y") || response.equals("yes")) {
 			answer = true;	
-		} else if (!response.equals("n") && !response.equals("no")){
-			// ERROR
 		}
+
 		return answer;
 	}
 
@@ -98,7 +116,7 @@ public class RayTraceReflections extends Frame {
 	}
 
 	public Color getColor(int x, int y) {
-		nTuple p = new nTuple(0.0f, 0.0f, camZ);	// camera point
+		nTuple p = new nTuple(0.0f, 0.0f, CAM_Z);	// camera point
 		nTuple q = imagePlaneCoord(x, y);			// point on image plane
 		ray ray = new ray(p, q.subtract(p), 0);
 		double closestHit = Double.POSITIVE_INFINITY;
@@ -107,11 +125,11 @@ public class RayTraceReflections extends Frame {
 		SphereList intersectSpheres = tree.getSpheres(q.getX(), q.getY());
 
 		while (intersectSpheres != null) { // Find closest sphere
-			Sphere next = intersectSpheres.getSphere();
-			intersection = ray.intersectSphere(next);
+			Sphere s = intersectSpheres.getSphere();
+			intersection = ray.intersectSphere(s);
 			if (intersection > 0.01f && intersection < closestHit) {
 				closestHit = intersection;
-				closestSphere = next;
+				closestSphere = s;
 			}
 			intersectSpheres = intersectSpheres.getNext();
 		}
@@ -123,10 +141,10 @@ public class RayTraceReflections extends Frame {
 				return reflect(closestSphere, ray, IntPt);
 			} else {
 				inShadow = inShadow(IntPt);
-				return closestSphere.shadeSphere(IntPt, light, inShadow);
+				return closestSphere.shadeSphere(IntPt, LIGHT, inShadow);
 			}
 		} else {
-			return new Color(background.getX(), background.getY(), background.getZ());
+			return new Color(BACKGROUND.getX(), BACKGROUND.getY(), BACKGROUND.getZ());
 		}
 	}
 
@@ -134,9 +152,10 @@ public class RayTraceReflections extends Frame {
 	 * Calculate reflections if desired, and then shade the sphere
 	 * accordingly.
 	 */
-	public Color reflect(Sphere s, ray incident, nTuple point) {
+	public Color reflect(Sphere current, ray incident, nTuple point) {
+		boolean inShadow = false;
 		if (REFLECT && incident.getDepth() < MAX_REFLECTION_DEPTH) {
-			nTuple n = point.subtract(s.getCenter()).normalize();
+			nTuple n = point.subtract(current.getCenter()).normalize();
 			nTuple incDir = incident.getVector();
 			nTuple reflectDir = new nTuple(incDir.subtract(n.scale(2*(n.dot(incDir)))));
 			ray reflection = new ray(point, reflectDir, incident.getDepth() + 1);
@@ -145,12 +164,12 @@ public class RayTraceReflections extends Frame {
 			float intersection = 0.0f;
 			Sphere closestSphere = null;
 			for (int i = 0; i < spheres.size(); i++) {
-				Sphere next = new Sphere(spheres.get(i));
-				if (!next.isEqual(s)) {
-					intersection = reflection.reflectIntersect(next);
+				Sphere s = new Sphere(spheres.get(i));
+				if (!s.isEqual(current)) {
+					intersection = reflection.reflectIntersect(s);
 					if (intersection < -0.01f && intersection > closestHit) {
 						closestHit = intersection;
-						closestSphere = new Sphere(next);
+						closestSphere = new Sphere(s);
 					}
 				}
 			}
@@ -158,22 +177,27 @@ public class RayTraceReflections extends Frame {
 				nTuple intPt = reflection.pointAlongRay((float) closestHit);
 				return reflect(closestSphere, reflection, intPt);
 			} else {
-				return new Color(background.getX() * 0.8f, background.getY() * 0.8f, background.getZ() * 0.8f);
+				return new Color(BACKGROUND.getX() * 0.8f,
+									BACKGROUND.getY() * 0.8f,
+									BACKGROUND.getZ() * 0.8f);
 			}
 		}
-		return s.shadeSphere(point, light, false);
+		return current.shadeSphere(point, LIGHT, inShadow);
 	}
 
 	// Check if a point on a sphere is in shadow
 	public boolean inShadow(nTuple point) {
-		nTuple coords = new nTuple(point.coordChange(light, lightBasis2, lightBasis3, point));
+		nTuple coords = new nTuple(point.coordChange(LIGHT,
+														LIGHT_BASIS_2,
+														LIGHT_BASIS_3,
+														point));
 		SphereList shadowIsect = shadowTree.getSpheres(coords.getY(), coords.getZ()); 
-		ray shadowRay = new ray(new nTuple(), light, 0);	// terminal at origin makes math easier
+		ray shadowRay = new ray(new nTuple(), LIGHT, 0);	// terminal at origin makes math easier
 		boolean inShadow = false;
 		while (!inShadow && (shadowIsect != null)) {
-			Sphere next = new Sphere(shadowIsect.getSphere());
-			next.setCenter(next.getCenter().subtract(point));
-			float intersection = shadowRay.intersectSphere(next);
+			Sphere s = new Sphere(shadowIsect.getSphere());
+			s.setCenter(s.getCenter().subtract(point));
+			float intersection = shadowRay.intersectSphere(s);
 			if (intersection > 0.0f) {
 				inShadow = true;
 			}
@@ -183,7 +207,9 @@ public class RayTraceReflections extends Frame {
 	}
 
 	public nTuple imagePlaneCoord(float u, float v) {
-		return new nTuple(this.s * (2*u/(float)WIDTH - 1), -1.0f * this.s * (2*v/(float)HEIGHT - 1), 0.0f);
+		return new nTuple(this.IMG_PLANE_SZ * (2*u/(float)WIDTH - 1),
+							-1.0f * this.IMG_PLANE_SZ * (2*v/(float)HEIGHT - 1),
+							0.0f);
 	}
 
     /**
@@ -222,4 +248,3 @@ public class RayTraceReflections extends Frame {
 		}
     }
 }
-

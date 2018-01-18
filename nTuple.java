@@ -46,12 +46,9 @@ public class nTuple {
 		this.z = newZ;
 	}
 
-	public int size() {
-		return 3;
-	}
-
-	public void print() {
-		System.out.println("(" + this.x + ", " + this.y + ", " + this.z + ")");
+	@Override
+	public String toString() {
+		return (this.x + "," + this.y + "," + this.z);
 	}
 
 	public boolean isEqual(nTuple other) {
@@ -99,144 +96,9 @@ public class nTuple {
 		return new nTuple(newX, newY, newZ);
 	} 
 
-	public float sqr(float x) { return x * x; }
-
 	public nTuple normalize() {
 		float len = (float) Math.sqrt(this.dot(this));
 		return new nTuple(this.x / len, this.y / len, this.z / len); 
-	}
-
-	//////////////////////////////////////////////////////////////////
-	// MATRIX TRANSFORMATIONS										//
-	// Reflections, projections, rotations,							//
-	// dilations/contractions, expansions/compressions, shears,		//
-	// orthogonal projections on lines thru the origin, reflections	//
-	// about lines thru the origin									//
-	////////////////////////////////////////////////////////////////// 
-
-	/*
-	 * REFLECTIONS	
-	 */
-	public nTuple reflectXY() {
-		nTuple a = new nTuple(1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, 1.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, -1.0f);
-		return this.product(a, b, c);
-	}
-
-	public nTuple reflectXZ() {
-		nTuple a = new nTuple(1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, -1.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 1.0f);
-		return this.product(a, b, c);
-	}
-
-	public nTuple reflectYZ() {
-		nTuple a = new nTuple(-1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, 1.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 1.0f);
-		return this.product(a, b, c);
-	}
-
-	/*
-	 * ORTHOGONAL PROJECTIONS ON PLANES
-	 */
-	public nTuple projectXY() {
-		nTuple a = new nTuple(1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, 1.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 0.0f);
-		return this.product(a, b, c);
-	}
-
-	public nTuple projectXZ() {
-		nTuple a = new nTuple(1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, 0.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 1.0f);
-		return this.product(a, b, c);
-	}
-
-	public nTuple projectYZ() {
-		nTuple a = new nTuple(0.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, 1.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 1.0f);
-		return this.product(a, b, c);
-	}
-
-	/*
-	 * ROTATION OPERATORS
-	 */
-	public nTuple rotateX(float angle) {
-		nTuple a = new nTuple(1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, (float) Math.cos(angle), -1.0f * (float) Math.sin(angle));
-		nTuple c = new nTuple(0.0f, (float) Math.sin(angle), (float) Math.cos(angle));
-		return this.product(a, b, c);
-	}
-
-	public nTuple rotateY(float angle) {
-		nTuple a = new nTuple((float) Math.cos(angle), 0.0f, (float) Math.sin(angle));
-		nTuple b = new nTuple(0.0f, 1.0f, 0.0f);
-		nTuple c = new nTuple(-1.0f * (float) Math.sin(angle), 0.0f, (float) Math.cos(angle));
-		return this.product(a, b, c);
-	}
-
-	public nTuple rotateZ(float angle) {
-		nTuple a = new nTuple((float) Math.cos(angle), -1.0f * (float) Math.sin(angle), 0.0f);
-		nTuple b = new nTuple((float) Math.sin(angle), (float) Math.cos(angle), 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 1.0f);
-		return this.product(a, b, c);
-	}
-
-	// Rotate about any axis in R3, given a unit vector
-	public nTuple rotateAxis(nTuple unitVector, float angle) {
-		float uX = unitVector.getX();
-		float uY = unitVector.getY();
-		float uZ = unitVector.getZ();
-		float cosAngle = (float) Math.cos(angle);
-		float sinAngle = (float) Math.sin(angle);
-		nTuple a = new nTuple(sqr(uX) * (1 - cosAngle) + cosAngle,
-								uX * uY * (1 - cosAngle) - uZ * sinAngle,
-								uX * uZ * (1 - cosAngle) + uY * sinAngle); 
-		nTuple b = new nTuple(uX * uY * (1 - cosAngle) + uZ * sinAngle,
-								sqr(uY) * (1 - cosAngle) + cosAngle,
-								uY * uZ * (1 - cosAngle) - uX * sinAngle);
-		nTuple c = new nTuple(uX * uZ * (1 - cosAngle) - uY * sinAngle,
-								uY * uZ * (1 - cosAngle) + uX * sinAngle,
-								sqr(uZ) * (1 - cosAngle) + cosAngle);
-		return this.product(a, b, c);	
-	}
-
-	/*
-	 * CONTRACTIONS/DILATIONS
-	 */
-	public nTuple contractDilate(float factor) {
-		nTuple a = new nTuple(factor, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, factor, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, factor);
-		return this.product(a, b, c);
-	}
-
-	/*
-	 * COMPRESSIONS/EXPANSIONS
-	 */
-	public nTuple compressExpandX(float factor) {
-		nTuple a = new nTuple(factor, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, 1.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 1.0f); 
-		return this.product(a, b, c);
-	}	
-
-	public nTuple compressExpandY(float factor) {
-		nTuple a = new nTuple(1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, factor, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, 1.0f);
-		return this.product(a, b, c);
-	}
-
-	public nTuple compressExpandZ(float factor) {
-		nTuple a = new nTuple(1.0f, 0.0f, 0.0f);
-		nTuple b = new nTuple(0.0f, 1.0f, 0.0f);
-		nTuple c = new nTuple(0.0f, 0.0f, factor);
-		return this.product(a, b, c);
 	}
 
 	//////////////////////////////////////////////////////////////////

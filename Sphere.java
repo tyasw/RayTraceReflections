@@ -41,6 +41,11 @@ public class Sphere {
 		return (this.center.isEqual(other.getCenter()) && (this.radius == other.getRadius()) && (this.color.isEqual(other.getColor())));
 	}
 
+	@Override
+	public String toString() {
+		return this.center.toString();
+	}
+
 	//////////////////////////////////////////////////////////////////
 	//						SPHERE MODIFICATIONS					//
 	//////////////////////////////////////////////////////////////////
@@ -61,46 +66,6 @@ public class Sphere {
 
 	public void setColor(nTuple newColor) {
 		this.color.setNTuple(newColor);
-	}
-
-	public void reflectXY() {
-		this.center.setNTuple(this.center.reflectXY());
-	}
-
-	public void reflectXZ() {
-		this.center.setNTuple(this.center.reflectXZ());
-	}
-
-	public void reflectYZ() {
-		this.center.setNTuple(this.center.reflectYZ());
-	}
-
-	public void projectXY() {
-		this.center.setNTuple(this.center.projectXY());
-	}
-
-	public void projectXZ() {
-		this.center.setNTuple(this.center.projectXZ());
-	}
-
-	public void projectYZ() {
-		this.center.setNTuple(this.center.projectYZ());
-	}
-
-	public void rotateX(float angle) {
-		this.center.setNTuple(this.center.rotateX(angle));
-	}
-
-	public void rotateY(float angle) {
-		this.center.setNTuple(this.center.rotateY(angle));
-	}
-
-	public void rotateZ(float angle) {
-		this.center.setNTuple(this.center.rotateZ(angle));
-	}
-
-	public void rotateAxis(nTuple unit, float angle) {
-		this.center.setNTuple(this.center.rotateAxis(unit, angle));
 	}
 
 	public Color shadeSphere(nTuple point, nTuple light, boolean inShadow) {
